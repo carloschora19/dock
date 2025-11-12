@@ -532,6 +532,9 @@
             font-size: 12px;
         }
     </style>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -830,10 +833,27 @@
         let draggedElement = null;
         let personIdCounter = 1;
 
-        // Load username from localStorage
-        window.addEventListener('DOMContentLoaded', function() {
-            const username = localStorage.getItem('username') || 'Usuario';
+        // Check authentication and load user data
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Check if user is authenticated
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                // User is not logged in, redirect to login
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // User is authenticated, load username
+            const username = localStorage.getItem('username') || session.user.email.split('@')[0];
             document.getElementById('username').textContent = username;
+
+            // Listen for auth state changes
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    window.location.href = 'login.html';
+                }
+            });
         });
 
         // Modal functions
@@ -997,10 +1017,22 @@
         }
 
         // Logout
-        function logout() {
+        async function logout() {
             if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-                localStorage.removeItem('username');
-                window.location.href = 'login.html';
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+
+                    // Clear local storage
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('userEmail');
+
+                    // Redirect to login
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    alert('Error al cerrar sesión. Por favor, intenta de nuevo.');
+                }
             }
         }
 

@@ -404,6 +404,9 @@
             }
         }
     </style>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
     <div class="success-overlay" id="successOverlay"></div>
@@ -417,12 +420,21 @@
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Amazon username</label>
-                    <input type="text" id="username" name="username" placeholder="Enter your Amazon username">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password">
                 </div>
 
                 <button type="submit" class="btn-signin" id="signinBtn" disabled>Sign in</button>
+                <button type="button" class="btn-signin" id="signupBtn" style="margin-top: 10px; background: #475569;" disabled>Sign up</button>
             </form>
+
+            <div id="errorMessage" style="color: #ef4444; margin-top: 15px; font-size: 14px; display: none;"></div>
+            <div id="successMessage" style="color: #10b981; margin-top: 15px; font-size: 14px; display: none;"></div>
 
             <div class="toggle-section">
                 <label class="toggle-switch">
@@ -454,39 +466,88 @@
     </div>
 
     <script>
-        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
         const signinBtn = document.getElementById('signinBtn');
+        const signupBtn = document.getElementById('signupBtn');
         const loginForm = document.getElementById('loginForm');
         const autoSubmitCheckbox = document.getElementById('autoSubmit');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
 
-        // Enable/disable sign in button based on username input
-        usernameInput.addEventListener('input', function() {
-            if (this.value.trim().length > 0) {
-                signinBtn.disabled = false;
-                signinBtn.classList.add('active');
-            } else {
-                signinBtn.disabled = true;
-                signinBtn.classList.remove('active');
-            }
-
-            // Auto-submit if enabled
-            if (autoSubmitCheckbox.checked && this.value.trim().length > 0) {
-                loginForm.submit();
+        // Check if user is already logged in
+        window.addEventListener('DOMContentLoaded', async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.href = 'index.html';
             }
         });
 
-        // Form submit handler with animations
-        loginForm.addEventListener('submit', function(e) {
+        // Enable/disable buttons based on input
+        function updateButtonState() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (email.length > 0 && password.length > 0) {
+                signinBtn.disabled = false;
+                signinBtn.classList.add('active');
+                signupBtn.disabled = false;
+                signupBtn.classList.add('active');
+            } else {
+                signinBtn.disabled = true;
+                signinBtn.classList.remove('active');
+                signupBtn.disabled = true;
+                signupBtn.classList.remove('active');
+            }
+        }
+
+        emailInput.addEventListener('input', updateButtonState);
+        passwordInput.addEventListener('input', updateButtonState);
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        // Hide messages
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // Sign in handler
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const username = usernameInput.value.trim();
-            if (username) {
+            hideMessages();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (email && password) {
                 // Start loading animation
                 signinBtn.classList.add('loading');
                 signinBtn.disabled = true;
-                usernameInput.disabled = true;
+                signupBtn.disabled = true;
+                emailInput.disabled = true;
+                passwordInput.disabled = true;
 
-                // Simulate authentication delay and show success
-                setTimeout(() => {
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) throw error;
+
                     // Remove loading, add success
                     signinBtn.classList.remove('loading');
                     signinBtn.classList.add('success');
@@ -494,6 +555,11 @@
 
                     // Show success overlay
                     document.getElementById('successOverlay').classList.add('show');
+
+                    // Get user profile data
+                    const username = data.user.email.split('@')[0];
+                    localStorage.setItem('username', username);
+                    localStorage.setItem('userEmail', data.user.email);
 
                     // Start fade out animation
                     setTimeout(() => {
@@ -504,13 +570,69 @@
                             document.getElementById('container').classList.add('zoom-out');
 
                             setTimeout(() => {
-                                // Store username for welcome message
-                                localStorage.setItem('username', username);
                                 window.location.href = 'index.html';
                             }, 400);
                         }, 300);
                     }, 600);
-                }, 1000);
+
+                } catch (error) {
+                    // Reset button state
+                    signinBtn.classList.remove('loading');
+                    signinBtn.disabled = false;
+                    signupBtn.disabled = false;
+                    emailInput.disabled = false;
+                    passwordInput.disabled = false;
+
+                    showError(error.message || 'Error al iniciar sesión');
+                }
+            }
+        });
+
+        // Sign up handler
+        signupBtn.addEventListener('click', async function() {
+            hideMessages();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (email && password) {
+                signupBtn.classList.add('loading');
+                signinBtn.disabled = true;
+                signupBtn.disabled = true;
+                emailInput.disabled = true;
+                passwordInput.disabled = true;
+
+                try {
+                    const { data, error } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) throw error;
+
+                    signupBtn.classList.remove('loading');
+
+                    if (data.user && data.user.identities && data.user.identities.length === 0) {
+                        showError('Este email ya está registrado. Por favor, inicia sesión.');
+                    } else {
+                        showSuccess('¡Cuenta creada exitosamente! Verifica tu email para confirmar tu cuenta.');
+                    }
+
+                    // Reset form
+                    emailInput.disabled = false;
+                    passwordInput.disabled = false;
+                    signinBtn.disabled = false;
+                    signupBtn.disabled = false;
+
+                } catch (error) {
+                    signupBtn.classList.remove('loading');
+                    signinBtn.disabled = false;
+                    signupBtn.disabled = false;
+                    emailInput.disabled = false;
+                    passwordInput.disabled = false;
+
+                    showError(error.message || 'Error al crear la cuenta');
+                }
             }
         });
 
