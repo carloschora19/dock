@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Dock - Sistema de Distribución</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #262626;
+            border-right: 1px solid #3a3a3a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .menu-items {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            margin-bottom: 4px;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: #333;
+        }
+
+        .menu-item.active {
+            background: #404040;
+        }
+
+        .menu-item-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #262626;
+            padding: 20px 30px;
+            border-bottom: 1px solid #3a3a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: transparent;
+            border: 1px solid #555;
+            color: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background: #333;
+            border-color: #666;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .btn-add {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #3b82f6;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-add:hover {
+            background: #2563eb;
+        }
+
+        /* Distribution Grid */
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tote-area {
+            grid-column: 1 / -1;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            background: #262626;
+            border: 2px dashed #3a3a3a;
+            border-radius: 12px;
+            padding: 30px;
+            min-height: 250px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background: #2a2a3a;
+        }
+
+        .drop-zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .drop-zone-count {
+            background: #3a3a3a;
+            color: #888;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .drop-zone-content {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .drop-zone-content.has-people {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            text-align: left;
+        }
+
+        /* Person Card */
+        .person-card {
+            background: #333;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: move;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .person-card:hover {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+
+        .person-card.dragging {
+            opacity: 0.5;
+        }
+
+        .person-name {
+            font-size: 14px;
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .btn-remove {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .btn-remove:hover {
+            color: #ef4444;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #262626;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #bbb;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn-cancel {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #555;
+            color: #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #333;
+        }
+
+        .btn-submit {
+            padding: 10px 20px;
+            background: #3b82f6;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: #2563eb;
+        }
+
+        /* Bookmarks Styles */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .bookmark-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bookmark-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: #262626;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .bookmark-item:hover {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        .bookmark-icon {
+            font-size: 18px;
+            color: #888;
+        }
+
+        .bookmark-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .bookmark-content:hover .bookmark-name {
+            color: #3b82f6;
+        }
+
+        .bookmark-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+
+        .bookmark-url {
+            font-size: 12px;
+            color: #888;
+            word-break: break-all;
+        }
+
+        .bookmark-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .btn-icon.edit:hover {
+            color: #3b82f6;
+        }
+
+        .btn-icon.delete:hover {
+            color: #ef4444;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-subtext {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Sub-zones */
+        .sub-zones {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sub-zone {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .sub-zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        .sub-zone-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        .sub-zone-count {
+            background: #3a3a3a;
+            color: #888;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .sub-zone-content {
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .sub-zone-content.empty {
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">MENÚ</div>
+        <div class="menu-items">
+            <button class="menu-item active" data-section="layout-dock">
+                <span class="menu-item-icon">📋</span>
+                <span>Layout Dock</span>
+            </button>
+            <button class="menu-item" data-section="bookmarks">
+                <span class="menu-item-icon">🔖</span>
+                <span>Bookmarks</span>
+            </button>
+            <button class="menu-item" data-section="barcodes">
+                <span class="menu-item-icon">📊</span>
+                <span>Barcodes</span>
+            </button>
+            <button class="menu-item" data-section="auditorias">
+                <span class="menu-item-icon">📄</span>
+                <span>Auditorías</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1>Bienvenido, <span id="username">mex3</span></h1>
+            <button class="btn-logout" onclick="logout()">
+                <span>↪</span>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Layout Dock Section -->
+            <div id="layout-dock" class="section active">
+                <div class="section-header">
+                    <h2>Distribución de Personal</h2>
+                    <button class="btn-add" onclick="openModal()">
+                        <span>+</span>
+                        <span>Agregar Persona</span>
+                    </button>
+                </div>
+
+                <!-- Distribution Grid -->
+                <div class="distribution-grid">
+                <!-- Lado B -->
+                <div class="drop-zone" data-zone="ladoB">
+                    <div class="drop-zone-header">
+                        <span class="drop-zone-title">Lado B</span>
+                        <span class="drop-zone-count" id="countLadoB">0</span>
+                    </div>
+                    <div class="sub-zones">
+                        <div class="sub-zone" data-subzone="ladoB-sorters">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Sorters</span>
+                                <span class="sub-zone-count" id="countLadoB-sorters">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoB-sorters" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="ladoB-fluid">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Fluid</span>
+                                <span class="sub-zone-count" id="countLadoB-fluid">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoB-fluid" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="ladoB-palletizado">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Palletizado</span>
+                                <span class="sub-zone-count" id="countLadoB-palletizado">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoB-palletizado" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lado A -->
+                <div class="drop-zone" data-zone="ladoA">
+                    <div class="drop-zone-header">
+                        <span class="drop-zone-title">Lado A</span>
+                        <span class="drop-zone-count" id="countLadoA">0</span>
+                    </div>
+                    <div class="sub-zones">
+                        <div class="sub-zone" data-subzone="ladoA-sorters">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Sorters</span>
+                                <span class="sub-zone-count" id="countLadoA-sorters">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoA-sorters" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="ladoA-fluid">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Fluid</span>
+                                <span class="sub-zone-count" id="countLadoA-fluid">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoA-fluid" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="ladoA-palletizeJackPot">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">PalletizeJackPot</span>
+                                <span class="sub-zone-count" id="countLadoA-palletizeJackPot">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoA-palletizeJackPot" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="ladoA-palletizeConvencional">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">PalletizeConvencional</span>
+                                <span class="sub-zone-count" id="countLadoA-palletizeConvencional">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentLadoA-palletizeConvencional" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tote -->
+                <div class="drop-zone tote-area" data-zone="tote">
+                    <div class="drop-zone-header">
+                        <span class="drop-zone-title">Tote</span>
+                        <span class="drop-zone-count" id="countTote">0</span>
+                    </div>
+                    <div class="sub-zones">
+                        <div class="sub-zone" data-subzone="tote-ingresando">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Ingresando</span>
+                                <span class="sub-zone-count" id="countTote-ingresando">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentTote-ingresando" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="tote-sorters">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Sorters</span>
+                                <span class="sub-zone-count" id="countTote-sorters">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentTote-sorters" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Soportes y GTDRs -->
+                <div class="drop-zone tote-area" data-zone="soportes-gtdrs">
+                    <div class="drop-zone-header">
+                        <span class="drop-zone-title">Soportes y GTDRs</span>
+                        <span class="drop-zone-count" id="countSoportes-gtdrs">0</span>
+                    </div>
+                    <div class="sub-zones" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="sub-zone" data-subzone="soportes">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">Soportes</span>
+                                <span class="sub-zone-count" id="countSoportes">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentSoportes" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                        <div class="sub-zone" data-subzone="gtdrs">
+                            <div class="sub-zone-header">
+                                <span class="sub-zone-title">GTDRs</span>
+                                <span class="sub-zone-count" id="countGtdrs">0</span>
+                            </div>
+                            <div class="sub-zone-content empty" id="contentGtdrs" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                                Arrastra aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <!-- Bookmarks Section -->
+            <div id="bookmarks" class="section">
+                <div class="section-header">
+                    <h2>Enlaces Guardados</h2>
+                    <button class="btn-add" onclick="openBookmarkModal()">
+                        <span>+</span>
+                        <span>Agregar Enlace</span>
+                    </button>
+                </div>
+
+                <div id="bookmarksList" class="bookmark-list">
+                    <!-- Bookmarks will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Barcodes Section -->
+            <div id="barcodes" class="section">
+                <div class="section-header">
+                    <h2>Barcodes</h2>
+                </div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <div class="empty-state-text">Sección en desarrollo</div>
+                    <div class="empty-state-subtext">Esta funcionalidad estará disponible pronto</div>
+                </div>
+            </div>
+
+            <!-- Auditorías Section -->
+            <div id="auditorias" class="section">
+                <div class="section-header">
+                    <h2>Auditorías</h2>
+                </div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-state-text">Sección en desarrollo</div>
+                    <div class="empty-state-subtext">Esta funcionalidad estará disponible pronto</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add Person -->
+    <div class="modal" id="addPersonModal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Persona</div>
+            <form id="addPersonForm" onsubmit="addPerson(event)">
+                <div class="form-group">
+                    <label for="personName">Nombre</label>
+                    <input type="text" id="personName" required placeholder="Ingresa el nombre">
+                </div>
+                <div class="form-group">
+                    <label for="personZone">Zona</label>
+                    <select id="personZone" class="form-group select">
+                        <optgroup label="Lado B">
+                            <option value="ladoB-sorters">Sorters</option>
+                            <option value="ladoB-fluid">Fluid</option>
+                            <option value="ladoB-palletizado">Palletizado</option>
+                        </optgroup>
+                        <optgroup label="Lado A">
+                            <option value="ladoA-sorters">Sorters</option>
+                            <option value="ladoA-fluid">Fluid</option>
+                            <option value="ladoA-palletizeJackPot">PalletizeJackPot</option>
+                            <option value="ladoA-palletizeConvencional">PalletizeConvencional</option>
+                        </optgroup>
+                        <optgroup label="Tote">
+                            <option value="tote-ingresando">Ingresando</option>
+                            <option value="tote-sorters">Sorters</option>
+                        </optgroup>
+                        <optgroup label="Soportes y GTDRs">
+                            <option value="soportes">Soportes</option>
+                            <option value="gtdrs">GTDRs</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Add/Edit Bookmark -->
+    <div class="modal" id="bookmarkModal">
+        <div class="modal-content">
+            <div class="modal-header" id="bookmarkModalTitle">Agregar Enlace</div>
+            <form id="bookmarkForm" onsubmit="saveBookmark(event)">
+                <div class="form-group">
+                    <label for="bookmarkName">Nombre</label>
+                    <input type="text" id="bookmarkName" required placeholder="Ej: CONTEOS QUIP">
+                </div>
+                <div class="form-group">
+                    <label for="bookmarkUrl">URL</label>
+                    <input type="url" id="bookmarkUrl" required placeholder="https://example.com">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeBookmarkModal()">Cancelar</button>
+                    <button type="submit" class="btn-submit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let draggedElement = null;
+        let personIdCounter = 1;
+
+        // Load username from localStorage
+        window.addEventListener('DOMContentLoaded', function() {
+            const username = localStorage.getItem('username') || 'Usuario';
+            document.getElementById('username').textContent = username;
+        });
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('addPersonModal').classList.add('show');
+            document.getElementById('personName').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('addPersonModal').classList.remove('show');
+            document.getElementById('addPersonForm').reset();
+        }
+
+        // Add person
+        function addPerson(event) {
+            event.preventDefault();
+            const name = document.getElementById('personName').value.trim();
+            const zone = document.getElementById('personZone').value;
+
+            if (name) {
+                const personId = 'person-' + personIdCounter++;
+                createPersonCard(personId, name, zone);
+                updateCount(zone);
+                closeModal();
+            }
+        }
+
+        // Create person card
+        function createPersonCard(id, name, subzone) {
+            const card = document.createElement('div');
+            card.className = 'person-card';
+            card.draggable = true;
+            card.id = id;
+            card.innerHTML = `
+                <span class="person-name">${name}</span>
+                <button class="btn-remove" onclick="removePerson('${id}', '${subzone}')">×</button>
+            `;
+
+            card.addEventListener('dragstart', dragStart);
+            card.addEventListener('dragend', dragEnd);
+
+            const content = document.getElementById('content' + capitalizeSubZone(subzone));
+            content.classList.remove('empty');
+            content.appendChild(card);
+        }
+
+        // Remove person
+        function removePerson(personId, subzone) {
+            const card = document.getElementById(personId);
+            if (card) {
+                card.remove();
+                updateCount(subzone);
+            }
+        }
+
+        // Drag and drop functions
+        function dragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function dragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+
+            if (draggedElement) {
+                // Get the new subzone from the drop target
+                const newSubZone = e.currentTarget.id.replace('content', '');
+
+                // Get old subzone
+                const oldSubZoneId = draggedElement.parentElement.id;
+                const oldSubZone = oldSubZoneId.replace('content', '');
+
+                // Move to new subzone
+                const content = e.currentTarget;
+                content.classList.remove('empty');
+                content.appendChild(draggedElement);
+
+                // Update remove button with new subzone
+                const removeBtn = draggedElement.querySelector('.btn-remove');
+                const normalizedSubZone = newSubZone.charAt(0).toLowerCase() + newSubZone.slice(1);
+                removeBtn.setAttribute('onclick', `removePerson('${draggedElement.id}', '${normalizedSubZone}')`);
+
+                updateCount(oldSubZone.charAt(0).toLowerCase() + oldSubZone.slice(1));
+                updateCount(normalizedSubZone);
+            }
+        }
+
+        // Update count for sub-zones and main zones
+        function updateCount(subzone) {
+            const content = document.getElementById('content' + capitalizeSubZone(subzone));
+            const count = content.querySelectorAll('.person-card').length;
+
+            // Update subzone count
+            document.getElementById('count' + capitalizeSubZone(subzone)).textContent = count;
+
+            if (count === 0) {
+                content.classList.add('empty');
+                content.innerHTML = 'Arrastra aquí';
+            }
+
+            // Update main zone count
+            const mainZone = subzone.split('-')[0];
+            updateMainZoneCount(mainZone);
+        }
+
+        // Update main zone total count
+        function updateMainZoneCount(mainZone) {
+            // Handle special case for soportes and gtdrs
+            if (mainZone === 'soportes' || mainZone === 'gtdrs') {
+                mainZone = 'soportes-gtdrs';
+            }
+
+            const mainZoneElement = document.querySelector(`[data-zone="${mainZone}"]`);
+            if (mainZoneElement) {
+                const allCards = mainZoneElement.querySelectorAll('.person-card');
+                const totalCount = allCards.length;
+                const countElement = document.getElementById('count' + capitalizeSubZone(mainZone));
+                if (countElement) {
+                    countElement.textContent = totalCount;
+                }
+            }
+        }
+
+        // Capitalize subzone name for IDs
+        function capitalizeSubZone(subzone) {
+            // Direct mapping for all zones and subzones
+            const zoneMap = {
+                'ladoB': 'LadoB',
+                'ladoA': 'LadoA',
+                'tote': 'Tote',
+                'soportes-gtdrs': 'Soportes-gtdrs',
+                'ladoB-sorters': 'LadoB-sorters',
+                'ladoB-fluid': 'LadoB-fluid',
+                'ladoB-palletizado': 'LadoB-palletizado',
+                'ladoA-sorters': 'LadoA-sorters',
+                'ladoA-fluid': 'LadoA-fluid',
+                'ladoA-palletizeJackPot': 'LadoA-palletizeJackPot',
+                'ladoA-palletizeConvencional': 'LadoA-palletizeConvencional',
+                'tote-ingresando': 'Tote-ingresando',
+                'tote-sorters': 'Tote-sorters',
+                'soportes': 'Soportes',
+                'gtdrs': 'Gtdrs'
+            };
+
+            return zoneMap[subzone] || subzone;
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                localStorage.removeItem('username');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('addPersonModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // ========== NAVIGATION ==========
+        // Handle section navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+
+                // Update active menu item
+                document.querySelectorAll('.menu-item').forEach(mi => mi.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update active section
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // ========== BOOKMARKS ==========
+        let bookmarks = [];
+        let editingBookmarkId = null;
+
+        // Load bookmarks from localStorage
+        function loadBookmarks() {
+            const saved = localStorage.getItem('bookmarks');
+            if (saved) {
+                bookmarks = JSON.parse(saved);
+            } else {
+                // Default bookmarks
+                bookmarks = [
+                    { id: 1, name: 'CONTEOS QUIP', url: 'https://example.com/conteos-quip' },
+                    { id: 2, name: 'SSP OB', url: 'https://example.com/ssp-ob' },
+                    { id: 3, name: 'YARD', url: 'https://example.com/yard' },
+                    { id: 4, name: 'VISTA', url: 'https://example.com/vista' },
+                    { id: 5, name: 'EAGLE EYE', url: 'https://example.com/eagle-eye' },
+                    { id: 6, name: 'VAST', url: 'https://example.com/vast' },
+                    { id: 7, name: 'MENSAJE ESCANER', url: 'https://example.com/mensaje-escaner' },
+                    { id: 8, name: 'EMPLOYEE', url: 'https://example.com/employee' },
+                    { id: 9, name: 'RODEO GENERAL', url: 'https://example.com/rodeo-general' },
+                    { id: 10, name: 'DOCK FLOOR', url: 'https://example.com/dock-floor' }
+                ];
+            }
+            renderBookmarks();
+        }
+
+        // Save bookmarks to localStorage
+        function saveBookmarksToStorage() {
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        }
+
+        // Render bookmarks
+        function renderBookmarks() {
+            const container = document.getElementById('bookmarksList');
+
+            if (bookmarks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔖</div>
+                        <div class="empty-state-text">No hay enlaces guardados</div>
+                        <div class="empty-state-subtext">Haz clic en el botón "+" para agregar tu primer enlace</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookmarks.map(bookmark => `
+                <div class="bookmark-item">
+                    <span class="bookmark-icon">🔗</span>
+                    <a href="${bookmark.url}" target="_blank" class="bookmark-content" style="text-decoration: none; color: inherit;">
+                        <div class="bookmark-name">${bookmark.name}</div>
+                        <div class="bookmark-url">${bookmark.url}</div>
+                    </a>
+                    <div class="bookmark-actions">
+                        <button class="btn-icon edit" onclick="editBookmark(${bookmark.id})" title="Editar">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete" onclick="deleteBookmark(${bookmark.id})" title="Eliminar">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Open bookmark modal for adding
+        function openBookmarkModal() {
+            editingBookmarkId = null;
+            document.getElementById('bookmarkModalTitle').textContent = 'Agregar Enlace';
+            document.getElementById('bookmarkForm').reset();
+            document.getElementById('bookmarkModal').classList.add('show');
+            document.getElementById('bookmarkName').focus();
+        }
+
+        // Close bookmark modal
+        function closeBookmarkModal() {
+            editingBookmarkId = null;
+            document.getElementById('bookmarkModal').classList.remove('show');
+            document.getElementById('bookmarkForm').reset();
+        }
+
+        // Save bookmark (add or edit)
+        function saveBookmark(event) {
+            event.preventDefault();
+            const name = document.getElementById('bookmarkName').value.trim();
+            const url = document.getElementById('bookmarkUrl').value.trim();
+
+            if (editingBookmarkId) {
+                // Edit existing bookmark
+                const bookmark = bookmarks.find(b => b.id === editingBookmarkId);
+                if (bookmark) {
+                    bookmark.name = name;
+                    bookmark.url = url;
+                }
+            } else {
+                // Add new bookmark
+                const newId = bookmarks.length > 0 ? Math.max(...bookmarks.map(b => b.id)) + 1 : 1;
+                bookmarks.push({ id: newId, name, url });
+            }
+
+            saveBookmarksToStorage();
+            renderBookmarks();
+            closeBookmarkModal();
+        }
+
+        // Edit bookmark
+        function editBookmark(id) {
+            const bookmark = bookmarks.find(b => b.id === id);
+            if (bookmark) {
+                editingBookmarkId = id;
+                document.getElementById('bookmarkModalTitle').textContent = 'Editar Enlace';
+                document.getElementById('bookmarkName').value = bookmark.name;
+                document.getElementById('bookmarkUrl').value = bookmark.url;
+                document.getElementById('bookmarkModal').classList.add('show');
+                document.getElementById('bookmarkName').focus();
+            }
+        }
+
+        // Delete bookmark
+        function deleteBookmark(id) {
+            if (confirm('¿Estás seguro que deseas eliminar este enlace?')) {
+                bookmarks = bookmarks.filter(b => b.id !== id);
+                saveBookmarksToStorage();
+                renderBookmarks();
+            }
+        }
+
+        // Close bookmark modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBookmarkModal();
+            }
+        });
+
+        // Close bookmark modal when clicking outside
+        document.getElementById('bookmarkModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBookmarkModal();
+            }
+        });
+
+        // Initialize bookmarks on load
+        loadBookmarks();
+    </script>
+</body>
+</html>
